@@ -1,1 +1,1 @@
-web: bin\gin-rest-api
+web: bin/gin-rest-api
