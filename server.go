@@ -9,7 +9,6 @@ import (
 	"github.com/BayronCampaz/gin-rest-api/middlewares"
 	"github.com/BayronCampaz/gin-rest-api/service"
 	"github.com/gin-gonic/gin"
-	gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -27,12 +26,9 @@ func main() {
 
 	server.LoadHTMLGlob("templates/*.html")
 
-	server.Use(gin.Recovery(),
-		middlewares.Logger(),
-		//middlewares.BasicAuth(),
-		gindump.Dump())
+	server.Use(gin.Recovery(), middlewares.Logger())
 
-	apiRoutes := server.Group("/api")
+	apiRoutes := server.Group("/api", middlewares.BasicAuth())
 
 	{
 		apiRoutes.GET("/videos", func(ctx *gin.Context) {
@@ -54,7 +50,9 @@ func main() {
 		viewRoutes.GET("/videos", videoController.ShowAll)
 	}
 
-	server.Run(":8000")
+	port := os.Getenv("PORT")
+
+	server.Run(":" + port)
 }
 
 func setupLogOutput() {
