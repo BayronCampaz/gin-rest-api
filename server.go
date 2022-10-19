@@ -12,8 +12,12 @@ import (
 )
 
 var (
-	videoService    service.VideoService       = service.New()
+	videoService service.VideoService = service.New()
+	loginService service.LoginService = service.NewLoginService()
+	jwtService   service.JWTService   = service.NewJWTService()
+
 	videoController controller.VideoController = controller.New(videoService)
+	loginController controller.LoginController = controller.NewLoginController(loginService, jwtService)
 )
 
 func main() {
@@ -28,7 +32,18 @@ func main() {
 
 	server.Use(gin.Recovery(), middlewares.Logger())
 
-	apiRoutes := server.Group("/api", middlewares.BasicAuth())
+	server.POST("/login", func(ctx *gin.Context) {
+		token := loginController.Login(ctx)
+		if token != "" {
+			ctx.JSON(http.StatusOK, gin.H{
+				"token": token,
+			})
+		} else {
+			ctx.JSON(http.StatusUnauthorized, nil)
+		}
+	})
+
+	apiRoutes := server.Group("/api", middlewares.AuthorizedJWT())
 
 	{
 		apiRoutes.GET("/videos", func(ctx *gin.Context) {
@@ -51,6 +66,10 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "5000"
+	}
 
 	server.Run(":" + port)
 }
